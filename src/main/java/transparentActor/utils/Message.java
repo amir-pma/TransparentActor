@@ -1,8 +1,8 @@
-package ta.utils;
+package transparentActor.utils;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import ta.actor.HandlerRef;
+import transparentActor.actor.HandlerRef;
 
 
 @Getter

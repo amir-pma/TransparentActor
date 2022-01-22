@@ -1,4 +1,4 @@
-package ta.exception;
+package transparentActor.exception;
 
 public class AlreadyActivatedException extends RuntimeException {
 }

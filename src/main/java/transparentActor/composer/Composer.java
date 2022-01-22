@@ -1,8 +1,8 @@
-package ta.composer;
+package transparentActor.composer;
 
-import ta.exception.AlreadyActivatedException;
-import ta.exception.AlreadyDeactivatedException;
-import ta.exception.CantDeregisterWhileRunningException;
+import transparentActor.exception.AlreadyActivatedException;
+import transparentActor.exception.AlreadyDeactivatedException;
+import transparentActor.exception.CantDeregisterWhileRunningException;
 
 import java.util.HashMap;
 import java.util.HashSet;

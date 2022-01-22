@@ -1,4 +1,4 @@
-package ta.exception;
+package transparentActor.exception;
 
 public class ActorNotActivatedException extends RuntimeException {
 }

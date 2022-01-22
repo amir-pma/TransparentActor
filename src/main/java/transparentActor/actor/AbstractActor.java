@@ -1,13 +1,13 @@
-package ta.actor;
+package transparentActor.actor;
 
 
-import ta.composer.Composer;
-import ta.composer.ComposerItem;
-import ta.exception.ActorHandlerNotFoundException;
-import ta.exception.NetworkNotActiveException;
-import ta.network.AbstractNetwork;
-import ta.utils.Buffer;
-import ta.utils.Message;
+import transparentActor.composer.Composer;
+import transparentActor.composer.ComposerItem;
+import transparentActor.exception.ActorHandlerNotFoundException;
+import transparentActor.exception.NetworkNotActiveException;
+import transparentActor.network.AbstractNetwork;
+import transparentActor.utils.Buffer;
+import transparentActor.utils.Message;
 
 import java.lang.reflect.Method;
 
@@ -27,19 +27,18 @@ import java.lang.reflect.Method;
 
 public abstract class AbstractActor extends ComposerItem {
 
-    protected final AbstractNetwork abstractNetwork;
-    public final static String ACTOR_PREFIX = "actor_";
+    protected final AbstractNetwork network;
     public final static String HANDLER_PREFIX = "handler_";
 
 
-    public AbstractActor(String identifier, Buffer buffer, AbstractNetwork abstractNetwork, Composer composer) {
-        super(ACTOR_PREFIX.concat(identifier), composer, buffer);
-        this.abstractNetwork = abstractNetwork;
+    public AbstractActor(String identifier, AbstractNetwork network, Composer composer, Buffer buffer) {
+        super(identifier, composer, buffer);
+        this.network = network;
     }
 
-    public AbstractActor(String identifier, AbstractNetwork abstractNetwork, Composer composer) {
-        super(ACTOR_PREFIX.concat(identifier), composer);
-        this.abstractNetwork = abstractNetwork;
+    public AbstractActor(String identifier, AbstractNetwork network, Composer composer) {
+        super(identifier, composer);
+        this.network = network;
     }
 
     public final void handle() {
@@ -65,22 +64,25 @@ public abstract class AbstractActor extends ComposerItem {
         }
     }
 
-    private void sendMessage(Message message) {
-        Boolean received = abstractNetwork.receiveMessageProtected(message);
+    protected final void sendMessage(Message message) {
+        Boolean received = network.receiveMessageProtected(message);
         if(!received)
             throw new NetworkNotActiveException();
     }
 
     //Receive Policy: Default Accept All
     public void receiveMessage(Message message) {
-        buffer.add(message);
+        buffer.insert(message);
     }
 
     //Take Policy: Default FIFO
     public Message takeMessage() {
-        Message message = buffer.getMessages().get(0);
-        buffer.remove(message);
-        return message;
+        if(buffer.getMessages().size() > 0) {
+            return buffer.getMessages().get(0);
+        }
+        else {
+            return null;
+        }
     }
 
 }

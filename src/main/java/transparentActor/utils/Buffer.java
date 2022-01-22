@@ -1,4 +1,4 @@
-package ta.utils;
+package transparentActor.utils;
 
 
 import lombok.Getter;
@@ -10,7 +10,7 @@ public class Buffer {
 
     private final ArrayList<Message> messages = new ArrayList<>();
 
-    public Boolean add(Message message) {
+    public Boolean insert(Message message) {
         return messages.add(message);
     }
 

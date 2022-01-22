@@ -1,32 +1,27 @@
-package ta.network;
+package transparentActor.network;
 
-import ta.actor.AbstractActor;
-import ta.composer.Composer;
-import ta.composer.ComposerItem;
-import ta.exception.ActorNotActivatedException;
-import ta.exception.DestinationActorNotFoundInNetworkException;
-import ta.exception.ReceiverNotAnActorException;
-import ta.utils.Buffer;
-import ta.utils.Message;
+import transparentActor.actor.AbstractActor;
+import transparentActor.composer.Composer;
+import transparentActor.composer.ComposerItem;
+import transparentActor.exception.ActorNotActivatedException;
+import transparentActor.exception.DestinationActorNotFoundInNetworkException;
+import transparentActor.utils.Buffer;
+import transparentActor.utils.Message;
 
 
 public abstract class AbstractNetwork extends ComposerItem {
 
-    public final static String NETWORK_PREFIX = "network_";
-
-    public AbstractNetwork(String identifier, Buffer buffer, Composer composer) {
-        super(NETWORK_PREFIX.concat(identifier), composer, buffer);
+    public AbstractNetwork(String identifier, Composer composer, Buffer buffer) {
+        super(identifier, composer, buffer);
     }
 
     public AbstractNetwork(String identifier, Composer composer) {
-        super(NETWORK_PREFIX.concat(identifier), composer);
+        super(identifier, composer);
     }
 
     public final void handle() {
         Message message = takeMessageProtected();
         if(message != null) {
-            if(!identifier.startsWith(AbstractActor.ACTOR_PREFIX))
-                throw new ReceiverNotAnActorException();
             AbstractActor destinationActor = (AbstractActor) composer.findItem(message.getHandlerRef().getActorIdentifier());
             if (destinationActor != null) {
                 if(this.requestComposerSchedule()) {
@@ -41,7 +36,9 @@ public abstract class AbstractNetwork extends ComposerItem {
     }
 
     public final void receiveMessage(Message message) {
-        buffer.add(tag(message));
+        Message taggedMessage = tag(message);
+        if(taggedMessage != null)
+            buffer.insert(taggedMessage);
     }
 
     private void transfer(AbstractActor destinationActor, Message message) {
@@ -57,9 +54,12 @@ public abstract class AbstractNetwork extends ComposerItem {
 
     //Take Message For Transfer Policy: Default FIFO
     public Message takeMessage() {
-        Message message = buffer.getMessages().get(0);
-        buffer.remove(message);
-        return message;
+        if(buffer.getMessages().size() > 0) {
+            return buffer.getMessages().get(0);
+        }
+        else {
+            return null;
+        }
     }
 
 }

@@ -1,16 +1,14 @@
-package ta.composer;
+package transparentActor.composer;
 
-import ta.actor.AbstractActor;
-import ta.exception.AlreadyActivatedException;
-import ta.exception.AlreadyDeactivatedException;
-import ta.exception.ComposerNotActiveException;
-import ta.network.AbstractNetwork;
-import ta.utils.Buffer;
-import ta.utils.Message;
+import transparentActor.actor.AbstractActor;
+import transparentActor.exception.AlreadyActivatedException;
+import transparentActor.exception.AlreadyDeactivatedException;
+import transparentActor.exception.ComposerNotActiveException;
+import transparentActor.network.AbstractNetwork;
+import transparentActor.utils.Buffer;
+import transparentActor.utils.Message;
 
-import java.time.LocalDateTime;
 import java.util.Comparator;
-import java.util.Random;
 
 
 public abstract class ComposerItem extends Thread {
@@ -117,7 +115,9 @@ public abstract class ComposerItem extends Thread {
         if(!isActive)
             return null;
         synchronized (buffer) {
-            return takeMessage();
+            Message message = takeMessage();
+            buffer.remove(message);
+            return message;
         }
     }
 
