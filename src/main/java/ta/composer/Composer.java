@@ -6,20 +6,26 @@ import ta.exception.CantDeregisterWhileRunningException;
 
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.PriorityQueue;
+import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
+
 
 public class Composer extends Thread {
 
-    private volatile Boolean isActive = false, isDeactivating = false;
-    private final PriorityQueue<ComposerItem> waitingItems;
+    private volatile Boolean isActive = false, isDeactivating = false, ageWaitingComposerItems = false;
+    private PriorityBlockingQueue<ComposerItem> waitingItems;
     protected final HashMap<ComposerItem, ComposerItem.StatusType> composerItems = new HashMap<>();
     private final HashMap<ComposerItem, ReentrantLock> composerItemLocks = new HashMap<>();
 
 
     public Composer() {
         this.setDaemon(true);
-        waitingItems = new PriorityQueue<>(new ComposerItem.ComposerItemComparator());
+        waitingItems = new PriorityBlockingQueue<>(10, new ComposerItem.ComposerItemComparator());
+    }
+
+    public Composer(Boolean ageWaitingComposerItems) {
+        this();
+        this.ageWaitingComposerItems = ageWaitingComposerItems;
     }
 
     public Boolean getIsActive() {
@@ -84,6 +90,10 @@ public class Composer extends Thread {
         if(!isActive || isDeactivating)
             return false;
         synchronized (this) {
+            if(ageWaitingComposerItems) {
+                updatePrioritiesForAging();
+                waitingItems = new PriorityBlockingQueue<>(waitingItems);
+            }
             composerItems.put(composerItem, ComposerItem.StatusType.WAITING);
             waitingItems.add(composerItem);
             composerItemLocks.get(composerItem).lock();
@@ -122,6 +132,11 @@ public class Composer extends Thread {
             composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
             composerItemLocks.get(composerItem).unlock();
         }
+    }
+
+    //Aging Method: Default increment priority of every item
+    public void updatePrioritiesForAging() {
+        waitingItems.forEach(item -> item.setItemPriority(item.getItemPriority() + 1));
     }
 
     //Schedule Policy: Default continue with default priorities (Non-Deterministic)

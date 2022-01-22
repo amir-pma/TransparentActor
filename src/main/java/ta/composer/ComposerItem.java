@@ -10,6 +10,7 @@ import ta.utils.Message;
 
 import java.time.LocalDateTime;
 import java.util.Comparator;
+import java.util.Random;
 
 
 public abstract class ComposerItem extends Thread {
@@ -20,12 +21,10 @@ public abstract class ComposerItem extends Thread {
 
     public final String identifier;
     private volatile Boolean isActive = false, isDeactivating = false;
-    private volatile int priority = 0;
-    private LocalDateTime requestTime;
+    private volatile Integer priority = 0;
     protected final Composer composer;
     protected final Buffer buffer;
-    public final static int MIN_PRIORITY = 0;
-    public final static int MAX_PRIORITY = 100;
+    public final static Integer MIN_PRIORITY = 0;
 
 
     public ComposerItem(String identifier, Composer composer, Buffer buffer) {
@@ -36,10 +35,7 @@ public abstract class ComposerItem extends Thread {
     }
 
     public ComposerItem(String identifier, Composer composer) {
-        this.identifier = identifier;
-        this.composer = composer;
-        this.buffer = new Buffer();
-        this.setDaemon(true);
+        this(identifier, composer, new Buffer());
     }
 
     public Boolean getIsActive() {
@@ -81,15 +77,22 @@ public abstract class ComposerItem extends Thread {
     }
 
     public final Boolean requestComposerSchedule() {
-        requestTime = LocalDateTime.now();
         return composer.requestSchedule(this);
     }
 
-    public final void setItemPriority(int newPriority) {
-        if (newPriority > MAX_PRIORITY || newPriority < MIN_PRIORITY) {
+    public final Integer getItemPriority() {
+        return priority;
+    }
+
+    public final void setItemPriority(Integer newPriority) {
+        if (newPriority < MIN_PRIORITY) {
             throw new IllegalArgumentException();
         }
         this.priority = newPriority;
+    }
+
+    public final void setItemPriorityAndUpdateComposer(Integer newPriority) {
+        setItemPriority(newPriority);
         composer.updateComposerItemPriorityInWaitingList(this);
     }
 
@@ -124,19 +127,10 @@ public abstract class ComposerItem extends Thread {
 
     public abstract Message takeMessage();
 
-    static class ComposerItemComparator implements Comparator<ComposerItem> {
+    static final class ComposerItemComparator implements Comparator<ComposerItem> {
         @Override
         public int compare(ComposerItem item1, ComposerItem item2) {
-            if(item1.priority < item2.priority)
-                return 1;
-            else if(item1.priority > item2.priority)
-                return -1;
-            else if(item2.requestTime.isBefore(item1.requestTime))
-                return 1;
-            else if(item1.requestTime.isBefore(item2.requestTime))
-                return -1;
-            else
-                return 0;
+            return Integer.compare(item2.priority, item1.priority);
         }
     }
 

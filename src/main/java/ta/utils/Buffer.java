@@ -18,6 +18,10 @@ public class Buffer {
         return messages.remove(message);
     }
 
+    public Integer size() {
+        return messages.size();
+    }
+
     public void emptyBuffer() {
         messages.removeAll(messages);
     }
