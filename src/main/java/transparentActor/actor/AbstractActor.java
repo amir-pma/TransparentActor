@@ -10,6 +10,7 @@ import transparentActor.utils.Buffer;
 import transparentActor.utils.Message;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
 
 /**
@@ -28,17 +29,20 @@ import java.lang.reflect.Method;
 public abstract class AbstractActor extends ComposerItem {
 
     protected final AbstractNetwork network;
+    private final String actorName;
     public final static String HANDLER_PREFIX = "handler_";
 
 
     public AbstractActor(String identifier, AbstractNetwork network, Composer composer, Buffer buffer) {
         super(identifier, composer, buffer);
         this.network = network;
+        this.actorName = this.getClass().getName();
     }
 
     public AbstractActor(String identifier, AbstractNetwork network, Composer composer) {
         super(identifier, composer);
         this.network = network;
+        this.actorName = this.getClass().getName();
     }
 
     public final void handle() {
@@ -47,12 +51,19 @@ public abstract class AbstractActor extends ComposerItem {
             if (!message.getHandlerRef().getHandlerName().startsWith(HANDLER_PREFIX)) {
                 throw new ActorHandlerNotFoundException();
             }
-            Method handler;
+            Method handler = null;
             try {
-                handler = this.getClass().getMethod(message.getHandlerRef().getHandlerName(), Message.class);
-            } catch (NoSuchMethodException e) {
+                for(Method method : Class.forName(actorName).getDeclaredMethods()) {
+                    if(method.getParameterCount() == 1 && (Message.class.isAssignableFrom(Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow()))) {
+                        handler = method;
+                        break;
+                    }
+                }
+            } catch (ClassNotFoundException e) {
                 throw new ActorHandlerNotFoundException();
             }
+            if(handler == null)
+                throw new ActorHandlerNotFoundException();
             if(this.requestComposerSchedule()) {
                 try {
                     handler.invoke(this, message);

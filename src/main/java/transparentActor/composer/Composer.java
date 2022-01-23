@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class Composer extends Thread {
@@ -16,11 +17,15 @@ public class Composer extends Thread {
     private PriorityBlockingQueue<ComposerItem> waitingItems;
     protected final HashMap<ComposerItem, ComposerItem.StatusType> composerItems = new HashMap<>();
     private final HashMap<ComposerItem, ReentrantLock> composerItemLocks = new HashMap<>();
+    private final long composerThreadId;
+    private final ReentrantLock composerLock;
 
 
     public Composer() {
         this.setDaemon(true);
         waitingItems = new PriorityBlockingQueue<>(10, new ComposerItem.ComposerItemComparator());
+        composerThreadId = currentThread().getId();
+        composerLock = new ReentrantLock();
     }
 
     public Composer(Boolean ageWaitingComposerItems) {
@@ -87,25 +92,27 @@ public class Composer extends Thread {
     }
     
     public final Boolean requestSchedule(ComposerItem composerItem) {
-        if(!isActive || isDeactivating)
+        if(!isActive || isDeactivating || currentThread().getId() == composerThreadId)
             return false;
-        synchronized (this) {
-            if(ageWaitingComposerItems) {
-                updatePrioritiesForAging();
-                waitingItems = new PriorityBlockingQueue<>(waitingItems);
-            }
-            composerItems.put(composerItem, ComposerItem.StatusType.WAITING);
-            waitingItems.add(composerItem);
-            composerItemLocks.get(composerItem).lock();
-            return true;
+        composerLock.lock();
+        if(ageWaitingComposerItems) {
+            updatePrioritiesForAging();
+            waitingItems = new PriorityBlockingQueue<>(waitingItems);
         }
+        composerItems.put(composerItem, ComposerItem.StatusType.WAITING);
+        waitingItems.add(composerItem);
+//        composerItemLocks.get(composerItem).lock();
+        composerLock.unlock();
+        return true;
+
     }
 
-    public final void changeItemStatusToIdle(ComposerItem composerItem) {
-        synchronized (this) {
-            composerItems.put(composerItem, ComposerItem.StatusType.IDLE);
-            composerItemLocks.get(composerItem).lock();
-        }
+    public final Boolean changeItemStatusToIdle(ComposerItem composerItem) {
+        if(currentThread().getId() == composerThreadId)
+            return false;
+        composerItems.put(composerItem, ComposerItem.StatusType.IDLE);
+        composerItemLocks.get(composerItem).lock();
+        return true;
     }
 
     public final ComposerItem findItem(String identifier) {
@@ -115,23 +122,25 @@ public class Composer extends Thread {
     }
 
     public final void updateComposerItemPriorityInWaitingList(ComposerItem composerItem) {
-        synchronized (this) {
-            if (waitingItems.contains(composerItem)) {
-                waitingItems.remove(composerItem);
-                waitingItems.add(composerItem);
-            }
+        if(currentThread().getId() == composerThreadId)
+            composerLock.lock();
+        if (waitingItems.contains(composerItem)) {
+            waitingItems.remove(composerItem);
+            waitingItems.add(composerItem);
         }
+        if(currentThread().getId() == composerThreadId)
+            composerLock.unlock();
     }
 
     private void handle() {
         if(waitingItems.isEmpty())
             return;
-        synchronized (this) {
-            preScheduleTask();
-            ComposerItem composerItem = waitingItems.poll();
-            composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
-            composerItemLocks.get(composerItem).unlock();
-        }
+        composerLock.lock();
+        preScheduleTask();
+        ComposerItem composerItem = waitingItems.poll();
+        composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
+//        composerItemLocks.get(composerItem).unlock();
+        composerLock.unlock();
     }
 
     //Aging Method: Default increment priority of every item

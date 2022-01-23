@@ -13,8 +13,8 @@ public class Printer extends RebecaActor {
     public void initial() {
     }
 
-    public void handle_print(PrintMessage message) {
-        System.out.println(message.getMessageText());
+    public void handler_print(PrintMessage message) {
+        System.out.println("Received message: " + message.getMessageText());
         try {
             Thread.sleep(4000);
         } catch (InterruptedException e) {

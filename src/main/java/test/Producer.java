@@ -22,7 +22,7 @@ public class Producer extends RebecaActor {
     public void handle_sendPrintMessage(RebecaMessage message) {
         while(true) {
             String messageText = "Current count: " + count++;
-            sendMessage(generateMessage("printer", "handle_print", messageText));
+            sendMessage(generateMessage("printer", "handler_print", messageText));
 
             System.out.println("Sent message: " + messageText + "    " + currentThread().getId());
             try {
