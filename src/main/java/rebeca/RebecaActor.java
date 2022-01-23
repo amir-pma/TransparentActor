@@ -6,6 +6,7 @@ import rebeca.exception.DestinationNotInKnownRebecsException;
 import rebeca.exception.KnownRebecNotFoundException;
 import transparentActor.actor.AbstractActor;
 import transparentActor.actor.HandlerRef;
+import transparentActor.utils.Message;
 
 import java.util.ArrayList;
 import java.util.Objects;
@@ -43,15 +44,17 @@ public abstract class RebecaActor extends AbstractActor {
         return (RebecaActorMailbox) buffer;
     }
 
-    public void receiveMessage(RebecaMessage message) {
+    @Override
+    public void receiveMessage(Message message) {
         if (Objects.equals(buffer.size(), ((RebecaActorMailbox) buffer).getMailBoxSize()))
             return;
         buffer.insert(message);
     }
 
-    public void sendRebecaMessage(RebecaMessage message) {
-        if(knownRebecs.stream().anyMatch(rebecaActor -> rebecaActor.identifier.equals(message.getSenderName())))
-            sendMessage(message);
+    public void sendRebecaMessage(Message message) {
+        RebecaMessage rebecaMessage = (RebecaMessage) message;
+        if(knownRebecs.stream().anyMatch(rebecaActor -> rebecaActor.identifier.equals(rebecaMessage.getSenderName())))
+            sendMessage(rebecaMessage);
         else
             throw new DestinationNotInKnownRebecsException();
     }

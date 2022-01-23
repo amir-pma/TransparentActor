@@ -11,12 +11,10 @@ public class SampleApplication {
     public static void main(String[] args) {
         RebecaComposer composer = new RebecaComposer();
         RebecaNetwork network = new RebecaNetwork("network", composer);
-        Producer producer = new Producer("producer", network, composer, 1);
+        Producer producer = new Producer("producer", network, composer, 5);
         Printer printer = new Printer("printer", network, composer, 5);
 
         producer.addKnownRebec(printer);
-
-//        System.out.println("Thread: " + currentThread().getId());
 
         composer.activate();
         network.activate();
@@ -24,6 +22,12 @@ public class SampleApplication {
         printer.activate();
 
         producer.initial();
+
+        try {
+            composer.join();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
 
     }
 

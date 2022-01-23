@@ -16,21 +16,27 @@ public class Producer extends RebecaActor {
 
     @Override
     public void initial() {
-        handle_sendPrintMessage(null);
+        handler_sendTwoPrintMessage(null);
     }
 
-    public void handle_sendPrintMessage(RebecaMessage message) {
-        while(true) {
+    public void handler_sendTwoPrintMessage(RebecaMessage message) {
+        try {
             String messageText = "Current count: " + count++;
+            Thread.sleep(3000);
             sendMessage(generateMessage("printer", "handler_print", messageText));
-
-            System.out.println("Sent message: " + messageText + "    " + currentThread().getId());
-            try {
-                Thread.sleep(2000);
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            System.out.println("(PRODUCER) Sent message: " + messageText);
+            messageText = "Current count: " + count++;
+            sendMessage(generateMessage("printer", "handler_print", messageText));
+            System.out.println("(PRODUCER) Sent message: " + messageText);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
         }
+    }
+
+    public void handler_getAck(RebecaMessage message) {
+        System.out.println("(PRODUCER) Received ack");
+        this.setItemPriorityAndUpdateComposer(this.getItemPriority() + 10);
+        handler_sendTwoPrintMessage(null);
     }
 
     public PrintMessage generateMessage(String destinationActorName, String destinationHandlerName, String messageText) {

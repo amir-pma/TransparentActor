@@ -88,12 +88,10 @@ public abstract class AbstractActor extends ComposerItem {
 
     //Take Policy: Default FIFO
     public Message takeMessage() {
-        if(buffer.getMessages().size() > 0) {
+        if(buffer.getMessages().size() > 0)
             return buffer.getMessages().get(0);
-        }
-        else {
+        else
             return null;
-        }
     }
 
 }

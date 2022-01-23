@@ -1,15 +1,15 @@
 package transparentActor.composer;
 
 import transparentActor.actor.AbstractActor;
-import transparentActor.exception.AlreadyActivatedException;
+import transparentActor.exception.AlreadyRegisteredException;
 import transparentActor.exception.AlreadyDeactivatedException;
-import transparentActor.exception.ComposerNotActiveException;
+import transparentActor.exception.CantDeregisterWhileRunningException;
 import transparentActor.network.AbstractNetwork;
 import transparentActor.utils.Buffer;
 import transparentActor.utils.Message;
 
 import java.util.Comparator;
-import java.util.Objects;
+import java.util.concurrent.locks.ReentrantLock;
 
 
 public abstract class ComposerItem extends Thread {
@@ -23,6 +23,8 @@ public abstract class ComposerItem extends Thread {
     private volatile Integer priority = 0;
     protected final Composer composer;
     protected final Buffer buffer;
+    protected final ReentrantLock bufferLock;
+    private final Boolean[] runLock;
     public final static Integer MIN_PRIORITY = 0;
 
 
@@ -30,7 +32,12 @@ public abstract class ComposerItem extends Thread {
         this.identifier = identifier;
         this.composer = composer;
         this.buffer = buffer;
+        this.bufferLock = new ReentrantLock();
         this.setDaemon(true);
+        runLock = new Boolean[] {false};
+        if (composer.findItem(identifier) != null)
+            throw new AlreadyRegisteredException();
+        composer.register(this, runLock);
     }
 
     public ComposerItem(String identifier, Composer composer) {
@@ -42,31 +49,31 @@ public abstract class ComposerItem extends Thread {
     }
 
     public final void activate() {
-        if(composer.findItem(identifier) != null)
-            throw new AlreadyActivatedException();
         isDeactivating = false;
-        Boolean isActivated = composer.register(this);
-        if(!isActivated)
-            throw new ComposerNotActiveException();
         this.start();
     }
 
     public final void deactivate() {
-        if(composer.findItem(identifier) == null)
+        if (composer.findItem(identifier) == null)
             throw new AlreadyDeactivatedException();
+        if(!composer.composerItems.get(this).equals(StatusType.IDLE))
+            throw new CantDeregisterWhileRunningException();
         isDeactivating = true;
         buffer.emptyBuffer();
         this.interrupt();
-        while (isActive)
-            Thread.onSpinWait();
-        composer.deregister(this);
     }
 
     @Override
     public final void run() {
         isActive = true;
-        while(!Thread.interrupted()) {
+        while (!Thread.interrupted()) {
             try {
+//                if(Objects.equals(identifier, "network"))
+//                    System.out.println("============  "+currentThread().getId());
+//                if(Objects.equals(identifier, "printer"))
+//                    System.out.println("+++++++++++   "+currentThread().getId());
+//                if(Objects.equals(identifier, "producer"))
+//                    System.out.println("*************   "+currentThread().getId());
                 handle();
             } catch (Exception e) {
                 e.printStackTrace();
@@ -76,7 +83,21 @@ public abstract class ComposerItem extends Thread {
     }
 
     public final Boolean requestComposerSchedule() {
-        return composer.requestSchedule(this);
+        runLock[0] = false;
+        Boolean canSchedule = composer.requestSchedule(this);
+        if (canSchedule) {
+            try {
+                synchronized (runLock) {
+                    while(!runLock[0])
+                        runLock.wait();
+                }
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+            return true;
+        } else {
+            return false;
+        }
     }
 
     public final Integer getItemPriority() {
@@ -104,22 +125,22 @@ public abstract class ComposerItem extends Thread {
     }
 
     public final Boolean receiveMessageProtected(Message message) {
-        if(!isActive || isDeactivating)
+        if (!isActive || isDeactivating)
             return false;
-        synchronized (buffer) {
-            receiveMessage(message);
-        }
+        this.bufferLock.lock();
+        receiveMessage(message);
+        this.bufferLock.unlock();
         return true;
     }
 
     public final Message takeMessageProtected() {
-        if(!isActive)
+        if (!isActive)
             return null;
-        synchronized (buffer) {
-            Message message = takeMessage();
-            buffer.remove(message);
-            return message;
-        }
+        this.bufferLock.lock();
+        Message message = takeMessage();
+        buffer.remove(message);
+        this.bufferLock.unlock();
+        return message;
     }
 
     public abstract void handle();

@@ -1,14 +1,12 @@
 package transparentActor.composer;
 
-import transparentActor.exception.AlreadyActivatedException;
+import transparentActor.exception.AlreadyRegisteredException;
 import transparentActor.exception.AlreadyDeactivatedException;
-import transparentActor.exception.CantDeregisterWhileRunningException;
 
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.concurrent.PriorityBlockingQueue;
 import java.util.concurrent.locks.ReentrantLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 
 public class Composer extends Thread {
@@ -16,7 +14,7 @@ public class Composer extends Thread {
     private volatile Boolean isActive = false, isDeactivating = false, ageWaitingComposerItems = false;
     private PriorityBlockingQueue<ComposerItem> waitingItems;
     protected final HashMap<ComposerItem, ComposerItem.StatusType> composerItems = new HashMap<>();
-    private final HashMap<ComposerItem, ReentrantLock> composerItemLocks = new HashMap<>();
+    private final HashMap<ComposerItem, Boolean[]> composerItemLocks = new HashMap<>();
     private final long composerThreadId;
     private final ReentrantLock composerLock;
 
@@ -38,24 +36,24 @@ public class Composer extends Thread {
     }
 
     public final void activate() {
-        if(isActive)
-            throw new AlreadyActivatedException();
+        if (isActive)
+            throw new AlreadyRegisteredException();
         isDeactivating = false;
         this.start();
     }
 
     public final void deactivate() {
-        if(!isActive)
+        if (!isActive)
             throw new AlreadyDeactivatedException();
         isDeactivating = true;
         HashSet<ComposerItem> networks = new HashSet<>();
-        for(ComposerItem composerItem : composerItems.keySet()) {
+        for (ComposerItem composerItem : composerItems.keySet()) {
             if (!composerItem.isNetwork())
                 composerItem.deactivate();
             else
                 networks.add(composerItem);
         }
-        for(ComposerItem network : networks)
+        for (ComposerItem network : networks)
             network.deactivate();
         this.interrupt();
     }
@@ -63,7 +61,7 @@ public class Composer extends Thread {
     @Override
     public final void run() {
         isActive = true;
-        while(!Thread.interrupted()) {
+        while (!Thread.interrupted()) {
             try {
                 handle();
             } catch (Exception e) {
@@ -74,44 +72,30 @@ public class Composer extends Thread {
     }
 
 
-    public final Boolean register(ComposerItem composerItem) {
-        if(!isActive || isDeactivating)
-            return false;
+    public final void register(ComposerItem composerItem, Boolean[] runLock) {
         composerItems.put(composerItem, ComposerItem.StatusType.IDLE);
-        ReentrantLock newLock = new ReentrantLock();
-        newLock.lock();
-        composerItemLocks.put(composerItem, newLock);
-        return true;
+        composerItemLocks.put(composerItem, runLock);
     }
 
-    public final void deregister(ComposerItem composerItem) {
-        if(!composerItems.get(composerItem).equals(ComposerItem.StatusType.IDLE))
-            throw new CantDeregisterWhileRunningException();
-        composerItems.remove(composerItem);
-        composerItemLocks.remove(composerItem);
-    }
-    
     public final Boolean requestSchedule(ComposerItem composerItem) {
-        if(!isActive || isDeactivating || currentThread().getId() == composerThreadId)
+        if (!isActive || isDeactivating || currentThread().getId() == composerThreadId)
             return false;
         composerLock.lock();
-        if(ageWaitingComposerItems) {
+        if (ageWaitingComposerItems) {
             updatePrioritiesForAging();
             waitingItems = new PriorityBlockingQueue<>(waitingItems);
         }
-        composerItems.put(composerItem, ComposerItem.StatusType.WAITING);
         waitingItems.add(composerItem);
-//        composerItemLocks.get(composerItem).lock();
+        composerItems.put(composerItem, ComposerItem.StatusType.WAITING);
         composerLock.unlock();
         return true;
 
     }
 
     public final Boolean changeItemStatusToIdle(ComposerItem composerItem) {
-        if(currentThread().getId() == composerThreadId)
+        if (currentThread().getId() == composerThreadId)
             return false;
         composerItems.put(composerItem, ComposerItem.StatusType.IDLE);
-        composerItemLocks.get(composerItem).lock();
         return true;
     }
 
@@ -122,24 +106,27 @@ public class Composer extends Thread {
     }
 
     public final void updateComposerItemPriorityInWaitingList(ComposerItem composerItem) {
-        if(currentThread().getId() == composerThreadId)
+        if (currentThread().getId() == composerThreadId)
             composerLock.lock();
         if (waitingItems.contains(composerItem)) {
             waitingItems.remove(composerItem);
             waitingItems.add(composerItem);
         }
-        if(currentThread().getId() == composerThreadId)
+        if (currentThread().getId() == composerThreadId)
             composerLock.unlock();
     }
 
     private void handle() {
-        if(waitingItems.isEmpty())
+        if (waitingItems.isEmpty())
             return;
         composerLock.lock();
         preScheduleTask();
         ComposerItem composerItem = waitingItems.poll();
+        synchronized (composerItemLocks.get(composerItem)) {
+            composerItemLocks.get(composerItem)[0] = true;
+            composerItemLocks.get(composerItem).notify();
+        }
         composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
-//        composerItemLocks.get(composerItem).unlock();
         composerLock.unlock();
     }
 
