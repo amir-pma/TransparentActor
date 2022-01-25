@@ -11,10 +11,11 @@ public class SampleApplication {
     public static void main(String[] args) {
         RebecaComposer composer = new RebecaComposer();
         RebecaNetwork network = new RebecaNetwork("network", composer);
-        Producer producer = new Producer("producer", network, composer, 5);
-        Printer printer = new Printer("printer", network, composer, 5);
+        Producer producer = new Producer("producer", network, composer, 3);
+        Printer printer = new Printer("printer", network, composer, 3);
 
         producer.addKnownRebec(printer);
+        printer.addKnownRebec(producer);
 
         composer.activate();
         network.activate();

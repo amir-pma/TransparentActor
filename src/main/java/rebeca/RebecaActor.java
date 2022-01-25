@@ -53,7 +53,7 @@ public abstract class RebecaActor extends AbstractActor {
 
     public void sendRebecaMessage(Message message) {
         RebecaMessage rebecaMessage = (RebecaMessage) message;
-        if(knownRebecs.stream().anyMatch(rebecaActor -> rebecaActor.identifier.equals(rebecaMessage.getSenderName())))
+        if(knownRebecs.stream().anyMatch(rebecaActor -> rebecaActor.identifier.equals(rebecaMessage.getHandlerRef().getActorIdentifier())))
             sendMessage(rebecaMessage);
         else
             throw new DestinationNotInKnownRebecsException();

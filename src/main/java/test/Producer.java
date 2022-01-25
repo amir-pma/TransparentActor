@@ -23,10 +23,10 @@ public class Producer extends RebecaActor {
         try {
             String messageText = "Current count: " + count++;
             Thread.sleep(3000);
-            sendMessage(generateMessage("printer", "handler_print", messageText));
+            sendRebecaMessage(generateMessage("printer", "handler_print", messageText));
             System.out.println("(PRODUCER) Sent message: " + messageText);
             messageText = "Current count: " + count++;
-            sendMessage(generateMessage("printer", "handler_print", messageText));
+            sendRebecaMessage(generateMessage("printer", "handler_print", messageText));
             System.out.println("(PRODUCER) Sent message: " + messageText);
         } catch (InterruptedException e) {
             e.printStackTrace();

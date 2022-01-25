@@ -17,7 +17,7 @@ public class Printer extends RebecaActor {
         try {
             System.out.println("(PRINTER) Received message: " + message.getMessageText());
             Thread.sleep(3000);
-            sendMessage(generateMessage("producer", "handler_getAck"));
+            sendRebecaMessage(generateMessage("producer", "handler_getAck"));
         } catch (InterruptedException e) {
             e.printStackTrace();
         }
