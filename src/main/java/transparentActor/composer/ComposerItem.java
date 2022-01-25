@@ -68,12 +68,6 @@ public abstract class ComposerItem extends Thread {
         isActive = true;
         while (!Thread.interrupted()) {
             try {
-//                if(Objects.equals(identifier, "network"))
-//                    System.out.println("============  "+currentThread().getId());
-//                if(Objects.equals(identifier, "printer"))
-//                    System.out.println("+++++++++++   "+currentThread().getId());
-//                if(Objects.equals(identifier, "producer"))
-//                    System.out.println("*************   "+currentThread().getId());
                 handle();
             } catch (Exception e) {
                 e.printStackTrace();
