@@ -1,6 +1,7 @@
 package transparentActor.composer;
 
 import transparentActor.actor.AbstractActor;
+import transparentActor.exception.AlreadyActivatedException;
 import transparentActor.exception.AlreadyRegisteredException;
 import transparentActor.exception.AlreadyDeactivatedException;
 import transparentActor.exception.CantDeregisterWhileRunningException;
@@ -28,6 +29,14 @@ public abstract class ComposerItem extends Thread {
     public final static Integer MIN_PRIORITY = 0;
 
 
+    public ComposerItem(String identifier, Composer composer) {
+        this(identifier, composer, new Buffer());
+    }
+
+    public Boolean getIsActive() {
+        return isActive;
+    }
+
     public ComposerItem(String identifier, Composer composer, Buffer buffer) {
         this.identifier = identifier;
         this.composer = composer;
@@ -40,21 +49,15 @@ public abstract class ComposerItem extends Thread {
         composer.register(this, runLock);
     }
 
-    public ComposerItem(String identifier, Composer composer) {
-        this(identifier, composer, new Buffer());
-    }
-
-    public Boolean getIsActive() {
-        return isActive;
-    }
-
     public final void activate() {
+        if(isActive)
+            throw new AlreadyActivatedException();
         isDeactivating = false;
         this.start();
     }
 
     public final void deactivate() {
-        if (composer.findItem(identifier) == null)
+        if (!isActive)
             throw new AlreadyDeactivatedException();
         if(!composer.composerItems.get(this).equals(StatusType.IDLE))
             throw new CantDeregisterWhileRunningException();
