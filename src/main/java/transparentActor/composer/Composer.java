@@ -78,6 +78,12 @@ public class Composer extends Thread {
         composerItemLocks.put(composerItem, runLock);
     }
 
+    public final ComposerItem findItem(String identifier) {
+        return composerItems.keySet().stream()
+                .filter(composerItem -> composerItem.identifier.equals(identifier)).findFirst()
+                .orElse(null);
+    }
+
     public final Boolean requestSchedule(ComposerItem composerItem) {
         if (!isActive || isDeactivating || currentThread().getId() == composerThreadId)
             return false;
@@ -90,7 +96,11 @@ public class Composer extends Thread {
         composerItems.put(composerItem, ComposerItem.StatusType.WAITING);
         composerLock.unlock();
         return true;
+    }
 
+    //Aging Method: Default increment priority of every item
+    public void updatePrioritiesForAging() {
+        waitingItems.forEach(item -> item.setItemPriority(item.getItemPriority() + 1));
     }
 
     public final Boolean changeItemStatusToIdle(ComposerItem composerItem) {
@@ -107,20 +117,14 @@ public class Composer extends Thread {
         return true;
     }
 
-    public final ComposerItem findItem(String identifier) {
-        return composerItems.keySet().stream()
-                .filter(composerItem -> composerItem.identifier.equals(identifier)).findFirst()
-                .orElse(null);
-    }
-
     public final void updateComposerItemPriorityInWaitingList(ComposerItem composerItem) {
-        if (currentThread().getId() == composerThreadId)
+        if (currentThread().getId() != composerThreadId)
             composerLock.lock();
         if (waitingItems.contains(composerItem)) {
             waitingItems.remove(composerItem);
             waitingItems.add(composerItem);
         }
-        if (currentThread().getId() == composerThreadId)
+        if (currentThread().getId() != composerThreadId)
             composerLock.unlock();
     }
 
@@ -137,13 +141,8 @@ public class Composer extends Thread {
         composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
         composerLock.unlock();
     }
-    //Aging Method: Default increment priority of every item
 
-    public void updatePrioritiesForAging() {
-        waitingItems.forEach(item -> item.setItemPriority(item.getItemPriority() + 1));
-    }
     //Schedule Policy: Default continue with default priorities (Non-Deterministic)
-
     public void preScheduleTask() {
         //You can change priorities or wait based on composer items
     }
