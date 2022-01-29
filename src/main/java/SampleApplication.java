@@ -3,8 +3,6 @@ import rebeca.RebecaNetwork;
 import test.Printer;
 import test.Producer;
 
-import static java.lang.Thread.currentThread;
-
 
 public class SampleApplication {
 
