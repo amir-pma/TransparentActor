@@ -4,7 +4,6 @@ import rebeca.RebecaActor;
 import rebeca.RebecaComposer;
 import rebeca.RebecaMessage;
 import rebeca.RebecaNetwork;
-import transparentActor.actor.HandlerRef;
 
 public class Producer extends RebecaActor {
 
@@ -40,7 +39,7 @@ public class Producer extends RebecaActor {
     }
 
     public PrintMessage generateMessage(String destinationActorName, String destinationHandlerName, String messageText) {
-        PrintMessage message = new PrintMessage(self.identifier, new HandlerRef(destinationActorName, destinationHandlerName));
+        PrintMessage message = new PrintMessage(self.identifier, destinationActorName, destinationHandlerName);
         message.setMessageText(messageText);
         return message;
     }

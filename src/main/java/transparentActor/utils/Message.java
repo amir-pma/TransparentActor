@@ -1,14 +1,18 @@
 package transparentActor.utils;
 
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import transparentActor.actor.HandlerRef;
+import lombok.*;
 
 
 @Getter
-@RequiredArgsConstructor
+@Setter
+@NoArgsConstructor
 public class Message {
 
-    private final HandlerRef handlerRef;
+    private String handlerName;
+    private String actorIdentifier;
 
+    public Message(String actorIdentifier, String handlerName) {
+        this.handlerName = handlerName;
+        this.actorIdentifier = actorIdentifier;
+    }
 }

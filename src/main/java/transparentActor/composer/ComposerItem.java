@@ -59,7 +59,6 @@ public abstract class ComposerItem extends Thread {
         if(!composer.composerItems.get(this).equals(StatusType.IDLE))
             throw new CantDeregisterWhileRunningException();
         isDeactivating = true;
-        buffer.emptyBuffer();
         this.interrupt();
     }
 

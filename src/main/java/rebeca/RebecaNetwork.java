@@ -5,8 +5,7 @@ import transparentActor.network.AbstractNetwork;
 public class RebecaNetwork extends AbstractNetwork {
 
     public RebecaNetwork(String identifier, RebecaComposer composer) {
-        super(identifier, composer, new RebecaNetworkMailbox());
-        this.setItemPriority(100);
+        super(identifier, composer, false, new RebecaNetworkMailbox());
     }
 
     public RebecaNetworkMailbox getBuff() {

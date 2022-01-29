@@ -5,26 +5,33 @@ import transparentActor.composer.Composer;
 import transparentActor.composer.ComposerItem;
 import transparentActor.exception.ActorNotActivatedException;
 import transparentActor.exception.DestinationActorNotFoundInNetworkException;
+import transparentActor.exception.DestinationActorNotSpecifiedInMessageException;
 import transparentActor.utils.Buffer;
 import transparentActor.utils.Message;
 
 
 public abstract class AbstractNetwork extends ComposerItem {
 
-    public AbstractNetwork(String identifier, Composer composer, Buffer buffer) {
+    private Boolean needScheduleInComposer;
+
+    public AbstractNetwork(String identifier, Composer composer, Boolean needScheduleInComposer, Buffer buffer) {
         super(identifier, composer, buffer);
+        this.needScheduleInComposer = needScheduleInComposer;
     }
 
-    public AbstractNetwork(String identifier, Composer composer) {
+    public AbstractNetwork(String identifier, Composer composer, Boolean needScheduleInComposer) {
         super(identifier, composer);
+        this.needScheduleInComposer = needScheduleInComposer;
     }
 
     public final void handle() {
         Message message = takeMessageProtected();
         if(message != null) {
-            AbstractActor destinationActor = (AbstractActor) composer.findItem(message.getHandlerRef().getActorIdentifier());
+            if(message.getActorIdentifier() == null)
+                throw new DestinationActorNotSpecifiedInMessageException();
+            AbstractActor destinationActor = (AbstractActor) composer.findItem(message.getActorIdentifier());
             if (destinationActor != null) {
-                if(this.requestComposerSchedule()) {
+                if(!needScheduleInComposer || this.requestComposerSchedule()) {
                     transfer(destinationActor, message);
                     composer.changeItemStatusToIdle(this);
                 }

@@ -4,6 +4,7 @@ package transparentActor.actor;
 import transparentActor.composer.Composer;
 import transparentActor.composer.ComposerItem;
 import transparentActor.exception.ActorHandlerNotFoundException;
+import transparentActor.exception.ActorHandlerNotSpecifiedInMessageException;
 import transparentActor.exception.NetworkNotActiveException;
 import transparentActor.network.AbstractNetwork;
 import transparentActor.utils.Buffer;
@@ -48,7 +49,9 @@ public abstract class AbstractActor extends ComposerItem {
     public final void handle() {
         Message message = takeMessageProtected();
         if(message != null) {
-            if (!message.getHandlerRef().getHandlerName().startsWith(HANDLER_PREFIX)) {
+            if(message.getHandlerName() == null)
+                throw new ActorHandlerNotSpecifiedInMessageException();
+            if (!message.getHandlerName().startsWith(HANDLER_PREFIX)) {
                 throw new ActorHandlerNotFoundException();
             }
             Method handler = null;
