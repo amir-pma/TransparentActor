@@ -57,7 +57,8 @@ public abstract class AbstractActor extends ComposerItem {
             Method handler = null;
             try {
                 for(Method method : Class.forName(actorName).getDeclaredMethods()) {
-                    if(method.getParameterCount() == 1 && (Message.class.isAssignableFrom(Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow()))) {
+                    if(method.getParameterCount() == 1 && method.getName().equals(message.getHandlerName()) &&
+                            (Message.class.isAssignableFrom(Arrays.stream(method.getParameterTypes()).findFirst().orElseThrow()))) {
                         handler = method;
                         break;
                     }
