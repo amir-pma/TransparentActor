@@ -33,7 +33,8 @@ public abstract class AbstractNetwork extends ComposerItem {
             if (destinationActor != null) {
                 if(!needScheduleInComposer || this.requestComposerSchedule()) {
                     transfer(destinationActor, message);
-                    composer.changeItemStatusToIdle(this);
+                    if(!needScheduleInComposer)
+                        composer.changeItemStatusToIdle(this);
                 }
             }
             else {
@@ -42,16 +43,16 @@ public abstract class AbstractNetwork extends ComposerItem {
         }
     }
 
-    public final void receiveMessage(Message message) {
-        Message taggedMessage = tag(message);
-        if(taggedMessage != null)
-            buffer.insert(taggedMessage);
-    }
-
     private void transfer(AbstractActor destinationActor, Message message) {
         Boolean received = destinationActor.receiveMessageProtected(message);
         if(!received)
             throw new ActorNotActivatedException();
+    }
+
+    public final void receiveMessage(Message message) {
+        Message taggedMessage = tag(message);
+        if(taggedMessage != null)
+            buffer.insert(taggedMessage);
     }
 
     //Tagging: Default No Extra Tag
