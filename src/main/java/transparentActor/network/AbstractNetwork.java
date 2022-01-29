@@ -12,7 +12,7 @@ import transparentActor.utils.Message;
 
 public abstract class AbstractNetwork extends ComposerItem {
 
-    private Boolean needScheduleInComposer;
+    private final Boolean needScheduleInComposer;
 
     public AbstractNetwork(String identifier, Composer composer, Boolean needScheduleInComposer, Buffer buffer) {
         super(identifier, composer, buffer);
