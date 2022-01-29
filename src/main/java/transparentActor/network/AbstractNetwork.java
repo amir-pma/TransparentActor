@@ -32,6 +32,8 @@ public abstract class AbstractNetwork extends ComposerItem {
             AbstractActor destinationActor = (AbstractActor) composer.findItem(message.getActorIdentifier());
             if (destinationActor != null) {
                 if(!needScheduleInComposer || this.requestComposerSchedule()) {
+                    if (!needScheduleInComposer)
+                        composer.changeItemStatusToRunning(this);
                     transfer(destinationActor, message);
                     if(!needScheduleInComposer)
                         composer.changeItemStatusToIdle(this);

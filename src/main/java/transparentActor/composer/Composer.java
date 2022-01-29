@@ -2,6 +2,7 @@ package transparentActor.composer;
 
 import transparentActor.exception.AlreadyRegisteredException;
 import transparentActor.exception.AlreadyDeactivatedException;
+import transparentActor.network.AbstractNetwork;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -99,6 +100,13 @@ public class Composer extends Thread {
         return true;
     }
 
+    public final Boolean changeItemStatusToRunning(ComposerItem composerItem) {
+        if (currentThread().getId() == composerThreadId)
+            return false;
+        composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
+        return true;
+    }
+
     public final ComposerItem findItem(String identifier) {
         return composerItems.keySet().stream()
                 .filter(composerItem -> composerItem.identifier.equals(identifier)).findFirst()
@@ -129,15 +137,14 @@ public class Composer extends Thread {
         composerItems.put(composerItem, ComposerItem.StatusType.RUNNING);
         composerLock.unlock();
     }
-
     //Aging Method: Default increment priority of every item
+
     public void updatePrioritiesForAging() {
         waitingItems.forEach(item -> item.setItemPriority(item.getItemPriority() + 1));
     }
-
     //Schedule Policy: Default continue with default priorities (Non-Deterministic)
+
     public void preScheduleTask() {
         //You can change priorities or wait based on composer items
     }
-
 }
