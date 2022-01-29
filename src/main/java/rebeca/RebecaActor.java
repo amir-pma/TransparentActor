@@ -25,10 +25,6 @@ public abstract class RebecaActor extends AbstractActor {
 
     public abstract void initial();
 
-    public RebecaMessage generateMessage(String destinationActorName, String destinationHandlerName) {
-        return new RebecaMessage(self.identifier, destinationActorName, destinationHandlerName);
-    }
-
     public Boolean addKnownRebec(RebecaActor rebecaActor) {
         return knownRebecs.add(rebecaActor);
     }
@@ -43,19 +39,24 @@ public abstract class RebecaActor extends AbstractActor {
         return (RebecaActorMailbox) buffer;
     }
 
+    public RebecaMessage generateMessage(String destinationActorName, String destinationHandlerName) {
+        return new RebecaMessage(self.identifier, destinationActorName, destinationHandlerName);
+    }
+
+    public void sendRebecaMessage(Message message) {
+        RebecaMessage rebecaMessage = (RebecaMessage) message;
+        if(knownRebecs.stream().anyMatch(rebecaActor ->
+                rebecaActor.identifier.equals(rebecaMessage.getActorIdentifier())))
+            sendMessage(rebecaMessage);
+        else
+            throw new DestinationNotInKnownRebecsException();
+    }
+
     @Override
     public void receiveMessage(Message message) {
         if (Objects.equals(((RebecaActorMailbox)buffer).size(), ((RebecaActorMailbox) buffer).getMailBoxSize()))
             return;
         buffer.insert(message);
-    }
-
-    public void sendRebecaMessage(Message message) {
-        RebecaMessage rebecaMessage = (RebecaMessage) message;
-        if(knownRebecs.stream().anyMatch(rebecaActor -> rebecaActor.identifier.equals(rebecaMessage.getActorIdentifier())))
-            sendMessage(rebecaMessage);
-        else
-            throw new DestinationNotInKnownRebecsException();
     }
 
     //Default Take Policy (FIFO)

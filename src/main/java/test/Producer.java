@@ -22,10 +22,12 @@ public class Producer extends RebecaActor {
         try {
             String messageText = "Current count: " + count++;
             Thread.sleep(3000);
-            sendRebecaMessage(generateMessage("printer", "handler_print", messageText));
+            sendRebecaMessage(generateMessage("printer",
+                    "handler_print", messageText));
             System.out.println("(PRODUCER) Sent message: " + messageText);
             messageText = "Current count: " + count++;
-            sendRebecaMessage(generateMessage("printer", "handler_print", messageText));
+            sendRebecaMessage(generateMessage("printer",
+                    "handler_print", messageText));
             System.out.println("(PRODUCER) Sent message: " + messageText);
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -34,7 +36,6 @@ public class Producer extends RebecaActor {
 
     public void handler_getAck(RebecaMessage message) {
         System.out.println("(PRODUCER) Received ack");
-        this.setItemPriorityAndUpdateComposer(this.getItemPriority() + 10);
         handler_sendTwoPrintMessage(null);
     }
 
