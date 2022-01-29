@@ -8,7 +8,7 @@ import transparentActor.utils.Buffer;
 @Getter
 @Setter
 @AllArgsConstructor
-public class RebecaMailbox extends Buffer {
+public class RebecaActorMailbox extends Buffer {
 
     private Integer mailBoxSize;
 

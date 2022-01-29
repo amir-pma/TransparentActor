@@ -19,7 +19,7 @@ public abstract class RebecaActor extends AbstractActor {
     protected ArrayList<RebecaActor> knownRebecs = new ArrayList<>();
 
     public RebecaActor(String identifier, RebecaNetwork network, RebecaComposer composer, Integer mailBoxSize) {
-        super(identifier, network, composer, new RebecaMailbox(mailBoxSize));
+        super(identifier, network, composer, new RebecaActorMailbox(mailBoxSize));
         self = this;
     }
 
@@ -39,13 +39,13 @@ public abstract class RebecaActor extends AbstractActor {
                 .findFirst().orElseThrow(KnownRebecNotFoundException::new);
     }
 
-    public RebecaMailbox getBuff() {
-        return (RebecaMailbox) buffer;
+    public RebecaActorMailbox getBuff() {
+        return (RebecaActorMailbox) buffer;
     }
 
     @Override
     public void receiveMessage(Message message) {
-        if (Objects.equals(((RebecaMailbox)buffer).size(), ((RebecaMailbox) buffer).getMailBoxSize()))
+        if (Objects.equals(((RebecaActorMailbox)buffer).size(), ((RebecaActorMailbox) buffer).getMailBoxSize()))
             return;
         buffer.insert(message);
     }
