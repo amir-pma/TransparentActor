@@ -28,11 +28,6 @@ public abstract class ComposerItem extends Thread {
     private final Boolean[] runLock;
     public final static Integer MIN_PRIORITY = 0;
 
-
-    public ComposerItem(String identifier, Composer composer) {
-        this(identifier, composer, new Buffer());
-    }
-
     public Boolean getIsActive() {
         return isActive;
     }

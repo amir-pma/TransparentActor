@@ -1,4 +1,4 @@
-package rebeca;
+package LF;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -10,7 +10,7 @@ import java.util.ArrayList;
 @Getter
 @Setter
 @AllArgsConstructor
-public class RebecaActorMailbox extends Buffer<RebecaMessage, ArrayList<RebecaMessage>> {
+public class LFBuffer extends Buffer<LFMessage, ArrayList<LFMessage>> {
 
     private Integer mailBoxSize;
 
@@ -19,12 +19,12 @@ public class RebecaActorMailbox extends Buffer<RebecaMessage, ArrayList<RebecaMe
         this.messages = new ArrayList<>();
     }
 
-    public Boolean contains(RebecaMessage message) {
-        return getMessages().contains(message);
-    }
-
     public Integer size() {
         return messages.size();
+    }
+
+    public LFMessage peek() {
+        return null;
     }
 
 }

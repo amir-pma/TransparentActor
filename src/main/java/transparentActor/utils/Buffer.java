@@ -3,18 +3,24 @@ package transparentActor.utils;
 
 import lombok.Getter;
 
-import java.util.ArrayList;
+import java.util.Collection;
 
 @Getter
-public class Buffer {
+public abstract class Buffer<M extends Message, C extends Collection<M>> {
 
-    protected final ArrayList<Message> messages = new ArrayList<>();
+    protected C messages;
 
-    public Boolean insert(Message message) {
+    public Buffer() {
+        initializeMessages();
+    }
+
+    public abstract void initializeMessages();
+
+    public Boolean insert(M message) {
         return messages.add(message);
     }
 
-    public Boolean remove(Message message) {
+    public Boolean remove(M message) {
         return messages.remove(message);
     }
 

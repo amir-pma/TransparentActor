@@ -40,12 +40,6 @@ public abstract class AbstractActor extends ComposerItem {
         this.actorName = this.getClass().getName();
     }
 
-    public AbstractActor(String identifier, AbstractNetwork network, Composer composer) {
-        super(identifier, composer);
-        this.network = network;
-        this.actorName = this.getClass().getName();
-    }
-
     public final void handle() {
         Message message = takeMessageProtected();
         if(message != null) {
@@ -93,7 +87,7 @@ public abstract class AbstractActor extends ComposerItem {
     //Take Policy: Default FIFO
     public Message takeMessage() {
         if(buffer.getMessages().size() > 0)
-            return buffer.getMessages().get(0);
+            return (Message) buffer.getMessages().stream().findFirst().orElse(null);
         else
             return null;
     }

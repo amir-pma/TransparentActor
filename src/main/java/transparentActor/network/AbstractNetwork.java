@@ -19,11 +19,6 @@ public abstract class AbstractNetwork extends ComposerItem {
         this.needScheduleInComposer = needScheduleInComposer;
     }
 
-    public AbstractNetwork(String identifier, Composer composer, Boolean needScheduleInComposer) {
-        super(identifier, composer);
-        this.needScheduleInComposer = needScheduleInComposer;
-    }
-
     public final void handle() {
         Message message = takeMessageProtected();
         if(message != null) {
@@ -65,7 +60,7 @@ public abstract class AbstractNetwork extends ComposerItem {
     //Take Message For Transfer Policy: Default FIFO
     public Message takeMessage() {
         if(buffer.getMessages().size() > 0)
-            return buffer.getMessages().get(0);
+            return (Message) buffer.getMessages().stream().findFirst().orElse(null);
         else
             return null;
     }
